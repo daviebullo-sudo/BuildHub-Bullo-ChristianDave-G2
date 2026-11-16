@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.title }} | BuildHub{% endblock %}
+{% block content %}
+<div class="card narrow wide">
+  <div class="page-head">
+    <h1>{{ project.title }}</h1>
+    <span class="badge status-{{ project.status }}">{{ project.get_status_display }}</span>
+  </div>
+  <dl class="details">
+    <dt>Description</dt><dd>{{ project.description|default:"No description"|linebreaksbr }}</dd>
+    <dt>Location</dt><dd>{{ project.location|default:"Not provided" }}</dd>
+    <dt>Estimated budget</dt><dd>PHP {{ project.estimated_budget|floatformat:2 }}</dd>
+    <dt>Start date</dt><dd>{{ project.start_date|date:"F j, Y" }}</dd>
+    <dt>Target completion</dt><dd>{{ project.target_completion_date|date:"F j, Y" }}</dd>
+    <dt>Homeowner</dt><dd>{{ project.owner.display_name }}</dd>
+    <dt>Contractor</dt><dd>{% if project.contractor %}{{ project.contractor.display_name }}{% else %}Not assigned{% endif %}</dd>
+    <dt>Created</dt><dd>{{ project.created_at|date:"F j, Y" }}</dd>
+  </dl>
+  <a class="btn btn-secondary-solid" href="{% url 'projects:list' %}">Back to list</a>
+  {% if is_owner %}
+    <a class="btn" href="{% url 'projects:update' project.pk %}">Edit</a>
+    <a class="btn btn-danger" href="{% url 'projects:delete' project.pk %}">Delete</a>
+  {% endif %}
+</div>
+{% endblock %}

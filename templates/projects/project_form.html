@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}Edit project{% else %}New project{% endif %} | BuildHub{% endblock %}
+{% block content %}
+<div class="card narrow wide">
+  <h1>{% if is_edit %}Edit project{% else %}New project{% endif %}</h1>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<div class="alert alert-error">{{ error }}</div>{% endfor %}
+    {% for field in form %}
+      {% include 'accounts/_field.html' with field=field %}
+    {% endfor %}
+    <button type="submit" class="btn">{% if is_edit %}Save changes{% else %}Create project{% endif %}</button>
+    <a class="btn btn-secondary" href="{% if is_edit %}{{ project.get_absolute_url }}{% else %}{% url 'projects:list' %}{% endif %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

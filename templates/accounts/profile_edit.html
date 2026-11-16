@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile | BuildHub{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Edit profile</h1>
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<div class="alert alert-error">{{ error }}</div>{% endfor %}
+    {% for field in form %}
+      {% include 'accounts/_field.html' with field=field %}
+    {% endfor %}
+    <button type="submit" class="btn">Save changes</button>
+    <a class="btn btn-secondary" href="{% url 'accounts:profile' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

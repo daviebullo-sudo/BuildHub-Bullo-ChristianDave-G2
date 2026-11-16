@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}My Profile | BuildHub{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <div class="profile-head">
+    {% if profile_user.profile_photo %}
+      <img class="avatar" src="{{ profile_user.profile_photo.url }}" alt="Profile photo of {{ profile_user.display_name }}">
+    {% else %}
+      <div class="avatar avatar-initial">{{ profile_user.username|slice:":1"|upper }}</div>
+    {% endif %}
+    <div>
+      <h1>{{ profile_user.display_name }}</h1>
+      <span class="badge">{{ profile_user.get_role_display }}</span>
+    </div>
+  </div>
+  <dl class="details">
+    <dt>Username</dt><dd>{{ profile_user.username }}</dd>
+    <dt>Email</dt><dd>{{ profile_user.email }}</dd>
+    <dt>Contact number</dt><dd>{{ profile_user.contact_number|default:"Not provided" }}</dd>
+    <dt>Member since</dt><dd>{{ profile_user.date_joined|date:"F j, Y" }}</dd>
+  </dl>
+  <a class="btn" href="{% url 'accounts:profile_edit' %}">Edit profile</a>
+</div>
+{% endblock %}

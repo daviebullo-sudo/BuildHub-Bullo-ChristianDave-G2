@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}BuildHub{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="{% url 'accounts:home' %}">BuildHub</a>
+    <nav>
+      {% if user.is_authenticated %}
+        <a href="{% url 'accounts:dashboard' %}">Dashboard</a>
+        {% if user.role == 'homeowner' %}
+          <a href="{% url 'projects:list' %}">My Projects</a>
+          <span class="nav-disabled" title="Coming in the next phase">Budget</span>
+          <span class="nav-disabled" title="Coming in the next phase">Materials</span>
+        {% elif user.role == 'contractor' %}
+          <a href="{% url 'projects:list' %}">Assigned Jobs</a>
+          <span class="nav-disabled" title="Coming in the next phase">Schedule</span>
+          <span class="nav-disabled" title="Coming in the next phase">Workers</span>
+        {% endif %}
+        <a href="{% url 'accounts:profile' %}">Profile</a>
+        <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
+          {% csrf_token %}
+          <button type="submit" class="link-button">Log out</button>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Log in</a>
+        <a href="{% url 'accounts:register' %}">Register</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="container">
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Contractor Dashboard | BuildHub{% endblock %}
+{% block content %}
+<h1>Contractor Dashboard</h1>
+<p class="muted">Welcome, {{ user.display_name }}. Coordinate workers, jobs, and schedules here.</p>
+<div class="grid">
+  <div class="card"><h2>Assigned Jobs</h2><p>You have <strong>{{ user.assigned_projects.count }}</strong> assigned project{{ user.assigned_projects.count|pluralize }}.</p><a class="btn" href="{% url 'projects:list' %}">View jobs</a></div>
+  <div class="card"><h2>Workers</h2><p>Record workers and assign responsibilities.</p><span class="badge badge-soon">Next phase</span></div>
+  <div class="card"><h2>Schedule</h2><p>Plan tasks and milestones by date.</p><span class="badge badge-soon">Next phase</span></div>
+  <div class="card"><h2>Costs</h2><p>Track job costs and materials.</p><span class="badge badge-soon">Next phase</span></div>
+</div>
+{% endblock %}
