@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Budget: {{ project.title }} | BuildHub{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ project.title }} Budget</h1>
+    <p class="muted">{{ project.location|default:"Location not provided" }}</p>
+  </div>
+  <a class="btn btn-secondary-solid" href="{% url 'projects:budget_list' %}">Back to budgets</a>
+</div>
+
+<div class="budget-summary">
+  <div class="card"><span class="budget-label">Estimated budget</span><strong>PHP {{ project.estimated_budget|floatformat:2 }}</strong></div>
+  <div class="card"><span class="budget-label">Total spent</span><strong>PHP {{ spent|floatformat:2 }}</strong></div>
+  <div class="card"><span class="budget-label">Remaining</span><strong>PHP {{ remaining|floatformat:2 }}</strong></div>
+</div>
+
+<div class="budget-layout">
+  <div class="card">
+    <h2>Record an expense</h2>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+          {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+      {% if form.non_field_errors %}<div class="field-error">{{ form.non_field_errors }}</div>{% endif %}
+      <button type="submit" class="btn">Add expense</button>
+    </form>
+  </div>
+
+  <div class="card table-wrap">
+    <h2>Expense history</h2>
+    {% if expenses %}
+      <table class="table">
+        <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead>
+        <tbody>
+          {% for expense in expenses %}
+            <tr>
+              <td>{{ expense.date|date:"M j, Y" }}</td>
+              <td>{{ expense.get_category_display }}</td>
+              <td>{{ expense.description }}</td>
+              <td>PHP {{ expense.amount|floatformat:2 }}</td>
+              <td><a class="btn btn-danger" href="{% url 'projects:expense_delete' expense.pk %}">Delete</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No expenses have been recorded for this project.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -141,6 +141,13 @@ textarea.form-control { resize: vertical; }
 .status-in_progress { background: #b87b28; }
 .status-on_hold { background: #777169; }
 .status-completed { background: var(--success); }
+.budget-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.budget-summary .card { display: flex; flex-direction: column; gap: 0.35rem; }
+.budget-summary strong { color: var(--brand); font-size: 1.25rem; }
+.budget-label { color: var(--muted); font-size: 0.82rem; font-weight: 800; text-transform: uppercase; }
+.budget-layout { display: grid; grid-template-columns: minmax(260px, 0.38fr) 1fr; gap: 1.25rem; align-items: start; }
+.budget-layout h2 { margin-top: 0; color: var(--brand); }
+.budget-projects td:last-child { text-align: right; }
 
 .card.narrow form ul { list-style: none; padding: 0; }
 .card.narrow form ul li { display: inline-flex; margin-right: 1.25rem; }
@@ -161,4 +168,6 @@ textarea.form-control { resize: vertical; }
   .details dt { margin-top: 0.45rem; }
   .table th, .table td { padding: 0.75rem; }
   .profile-head { align-items: flex-start; }
+  .budget-summary { grid-template-columns: 1fr; }
+  .budget-layout { grid-template-columns: 1fr; }
 }

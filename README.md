@@ -75,3 +75,5 @@ python manage.py test accounts
 | `/projects/<id>/` | Owner or assigned contractor | Project details |
 | `/projects/<id>/edit/` | Owner only | Update a project |
 | `/projects/<id>/delete/` | Owner only | Delete a project (confirmation page) |
+| `/projects/budget/` | Owner or assigned contractor | View total budgets and recorded expenses |
+| `/projects/<id>/budget/` | Owner or assigned contractor | Record and delete project expenses |

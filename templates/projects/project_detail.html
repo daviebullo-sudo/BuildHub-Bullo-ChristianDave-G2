@@ -16,6 +16,7 @@
     <dt>Contractor</dt><dd>{% if project.contractor %}{{ project.contractor.display_name }}{% else %}Not assigned{% endif %}</dd>
     <dt>Created</dt><dd>{{ project.created_at|date:"F j, Y" }}</dd>
   </dl>
+    <a class="btn" href="{% url 'projects:budget_detail' project.pk %}">View budget</a>
   <a class="btn btn-secondary-solid" href="{% url 'projects:list' %}">Back to list</a>
   {% if is_owner %}
     <a class="btn" href="{% url 'projects:update' project.pk %}">Edit</a>

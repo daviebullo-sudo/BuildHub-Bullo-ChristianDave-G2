@@ -57,3 +57,42 @@ class Project(models.Model):
 
     def get_absolute_url(self):
         return reverse('projects:detail', args=[self.pk])
+
+    @property
+    def remaining_budget(self):
+        spent = getattr(self, 'spent', None) or Decimal('0')
+        return self.estimated_budget - spent
+
+
+class Expense(models.Model):
+    class Category(models.TextChoices):
+        LABOR = 'labor', 'Labor'
+        MATERIALS = 'materials', 'Materials'
+        EQUIPMENT = 'equipment', 'Equipment'
+        PERMITS = 'permits', 'Permits'
+        UTILITIES = 'utilities', 'Utilities'
+        OTHER = 'other', 'Other'
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='expenses')
+    category = models.CharField(max_length=20, choices=Category.choices, default=Category.MATERIALS)
+    description = models.CharField(max_length=200)
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))]
+    )
+    date = models.DateField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recorded_expenses'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(amount__gte=Decimal('0.01')),
+                name='expense_amount_positive',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.description} - PHP {self.amount}'

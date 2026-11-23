@@ -10,7 +10,7 @@
 </div>
 <div class="grid">
   <div class="card"><h2>My Projects</h2><p>You have <strong>{{ user.projects.count }}</strong> active project{{ user.projects.count|pluralize }}.</p><a class="btn" href="{% url 'projects:list' %}">View projects</a></div>
-  <div class="card"><h2>Budget</h2><p>Compare estimated and actual expenses.</p><span class="badge badge-soon">Next phase</span></div>
+  <div class="card"><h2>Budget</h2><p>Compare estimated budgets with recorded expenses.</p><a class="btn" href="{% url 'projects:budget_list' %}">View budget</a></div>
   <div class="card"><h2>Materials</h2><p>Track materials, quantities, and purchase status.</p><span class="badge badge-soon">Next phase</span></div>
   <div class="card"><h2>Progress</h2><p>See how much of each project is done.</p><span class="badge badge-soon">Next phase</span></div>
 </div>

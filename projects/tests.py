@@ -1,11 +1,12 @@
 from datetime import date
+from decimal import Decimal
 
 from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import User
 
-from .models import Project
+from .models import Expense, Project
 
 PASSWORD = 'StrongPass#2026'
 
@@ -209,3 +210,67 @@ class ProjectUpdateDeleteTests(TestCase):
         self.assertRedirects(response, reverse('projects:list'))
         self.assertContains(response, 'was deleted')
         self.assertFalse(Project.objects.filter(pk=self.project.pk).exists())
+
+
+class BudgetTests(TestCase):
+    def setUp(self):
+        self.owner = make_user('budget-owner')
+        self.builder = make_user('budget-builder', User.Role.CONTRACTOR)
+        self.stranger = make_user('budget-stranger', User.Role.CONTRACTOR)
+        self.project = make_project(
+            self.owner,
+            'Budget Kitchen',
+            contractor=self.builder,
+            estimated_budget='100000.00',
+        )
+
+    def test_owner_and_contractor_can_view_and_add_expenses(self):
+        for user in (self.owner, self.builder):
+            with self.subTest(user=user.username):
+                self.client.login(username=user.username, password=PASSWORD)
+                detail_url = reverse('projects:budget_detail', args=[self.project.pk])
+                response = self.client.post(detail_url, {
+                    'category': Expense.Category.MATERIALS,
+                    'description': 'Tiles',
+                    'amount': '12500.50',
+                    'date': '2026-12-02',
+                }, follow=True)
+                self.assertRedirects(response, detail_url)
+                self.assertContains(response, 'Expense recorded successfully')
+
+        expense = Expense.objects.first()
+        self.assertEqual(expense.created_by, self.builder)
+        response = self.client.get(detail_url)
+        self.assertEqual(response.context['spent'], Decimal('25001.00'))
+
+    def test_budget_summary_shows_totals(self):
+        Expense.objects.create(
+            project=self.project,
+            category=Expense.Category.LABOR,
+            description='Installation',
+            amount='25000.00',
+            date=date(2026, 12, 2),
+            created_by=self.builder,
+        )
+        self.client.login(username='budget-owner', password=PASSWORD)
+        response = self.client.get(reverse('projects:budget_list'))
+        self.assertContains(response, 'PHP 100000.00')
+        self.assertContains(response, 'PHP 25000.00')
+        self.assertContains(response, 'PHP 75000.00')
+
+    def test_unrelated_user_cannot_view_or_delete_expense(self):
+        expense = Expense.objects.create(
+            project=self.project,
+            category=Expense.Category.OTHER,
+            description='Delivery',
+            amount='500.00',
+            date=date(2026, 12, 2),
+            created_by=self.owner,
+        )
+        self.client.login(username='budget-stranger', password=PASSWORD)
+        detail_url = reverse('projects:budget_detail', args=[self.project.pk])
+        self.assertEqual(self.client.get(detail_url).status_code, 404)
+        self.assertEqual(
+            self.client.post(reverse('projects:expense_delete', args=[expense.pk])).status_code,
+            404,
+        )

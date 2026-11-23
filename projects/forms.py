@@ -3,7 +3,7 @@ from django import forms
 from accounts.forms import StyledFormMixin
 from accounts.models import User
 
-from .models import Project
+from .models import Expense, Project
 
 
 class ProjectForm(StyledFormMixin, forms.ModelForm):
@@ -48,3 +48,21 @@ class ProjectForm(StyledFormMixin, forms.ModelForm):
                 'Target completion date must be later than the start date.',
             )
         return cleaned
+
+
+class ExpenseForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = Expense
+        fields = ('category', 'description', 'amount', 'date')
+        labels = {
+            'amount': 'Amount (PHP)',
+        }
+        widgets = {
+            'description': forms.TextInput(attrs={'placeholder': 'What was purchased or paid for?'}),
+            'amount': forms.NumberInput(attrs={'min': '0.01', 'step': '0.01'}),
+            'date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style_fields()

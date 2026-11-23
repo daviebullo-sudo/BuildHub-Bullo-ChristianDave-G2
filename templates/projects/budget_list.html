@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{% if user.role == 'contractor' %}Job Costs{% else %}Project Budgets{% endif %} | BuildHub{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{% if user.role == 'contractor' %}Job Costs{% else %}Project Budgets{% endif %}</h1>
+    <p class="muted">Estimated budgets and recorded expenses.</p>
+  </div>
+</div>
+
+<div class="budget-summary">
+  <div class="card"><span class="budget-label">Total budget</span><strong>PHP {{ total_budget|floatformat:2 }}</strong></div>
+  <div class="card"><span class="budget-label">Total spent</span><strong>PHP {{ total_spent|floatformat:2 }}</strong></div>
+  <div class="card"><span class="budget-label">Remaining</span><strong>PHP {{ total_remaining|floatformat:2 }}</strong></div>
+</div>
+
+{% if projects %}
+  <div class="card table-wrap budget-projects">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Budget</th>
+          <th>Spent</th>
+          <th>Remaining</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in projects %}
+          {% with spent=project.spent|default:0 %}
+          <tr>
+            <td><strong>{{ project.title }}</strong></td>
+            <td>PHP {{ project.estimated_budget|floatformat:2 }}</td>
+            <td>PHP {{ spent|floatformat:2 }}</td>
+            <td>PHP {{ project.remaining_budget|floatformat:2 }}</td>
+            <td><a class="btn" href="{% url 'projects:budget_detail' project.pk %}">Manage budget</a></td>
+          </tr>
+          {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card"><p>No projects are available for budgeting yet.</p></div>
+{% endif %}
+{% endblock %}
