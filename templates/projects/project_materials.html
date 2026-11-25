@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Materials: {{ project.title }} | BuildHub{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ project.title }} Materials</h1>
+    <p class="muted">{{ project.location|default:"Location not provided" }}</p>
+  </div>
+  <a class="btn btn-secondary-solid" href="{% url 'projects:materials_list' %}">Back to materials</a>
+</div>
+
+<div class="budget-layout">
+  <div class="card">
+    <h2>Add a material</h2>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+      {% if form.non_field_errors %}<div class="field-error">{{ form.non_field_errors }}</div>{% endif %}
+      <button type="submit" class="btn">Add material</button>
+    </form>
+  </div>
+
+  <div class="card table-wrap">
+    <h2>Material list</h2>
+    {% if materials %}
+      <table class="table">
+        <thead><tr><th>Material</th><th>Quantity</th><th>Purchase status</th><th></th></tr></thead>
+        <tbody>
+          {% for material in materials %}
+            <tr>
+              <td>{{ material.name }}</td>
+              <td>{{ material.quantity|floatformat:2 }} {{ material.unit }}</td>
+              <td>
+                <form method="post" action="{% url 'projects:material_status' material.pk %}">
+                  {% csrf_token %}
+                  <select class="form-control" id="material-status-{{ material.pk }}" name="status" aria-label="Status for {{ material.name }}">
+                    {% for value, label in status_choices %}
+                      <option value="{{ value }}"{% if material.status == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="btn">Update</button>
+                </form>
+              </td>
+              <td><a class="btn btn-danger" href="{% url 'projects:material_delete' material.pk %}">Delete</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No materials have been added to this project.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

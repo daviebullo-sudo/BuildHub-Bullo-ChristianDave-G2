@@ -2,15 +2,16 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Sum
+from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from accounts.decorators import role_required
 from accounts.models import User
 
-from .forms import ExpenseForm, ProjectForm
-from .models import Expense, Project
+from .forms import ExpenseForm, MaterialForm, MaterialStatusForm, ProjectForm
+from .models import Expense, Material, Project
 
 
 def visible_projects(user):
@@ -85,6 +86,70 @@ def budget_list(request):
         'total_spent': total_spent,
         'total_remaining': total_budget - total_spent,
     })
+
+
+@login_required
+def materials_list(request):
+    projects = visible_projects(request.user).annotate(
+        material_count=Count('materials')
+    ).select_related('owner', 'contractor')
+    return render(request, 'projects/materials_list.html', {'projects': projects})
+
+
+@login_required
+def project_materials(request, pk):
+    project = get_object_or_404(visible_projects(request.user), pk=pk)
+    if request.method == 'POST':
+        form = MaterialForm(request.POST)
+        if form.is_valid():
+            material = form.save(commit=False)
+            material.project = project
+            material.created_by = request.user
+            material.save()
+            messages.success(request, 'Material added successfully.')
+            return redirect('projects:materials_detail', pk=project.pk)
+        messages.error(request, 'Could not add the material. Please fix the errors below.')
+    else:
+        form = MaterialForm()
+
+    return render(request, 'projects/project_materials.html', {
+        'project': project,
+        'materials': project.materials.select_related('created_by'),
+        'form': form,
+        'status_choices': Material.Status.choices,
+    })
+
+
+@login_required
+@require_POST
+def material_update_status(request, pk):
+    material = get_object_or_404(
+        Material.objects.select_related('project'),
+        pk=pk,
+        project__in=visible_projects(request.user),
+    )
+    form = MaterialStatusForm(request.POST, instance=material)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Material status updated.')
+    else:
+        messages.error(request, 'Could not update the material status.')
+    return redirect('projects:materials_detail', pk=material.project_id)
+
+
+@login_required
+def material_delete(request, pk):
+    material = get_object_or_404(
+        Material.objects.select_related('project'),
+        pk=pk,
+        project__in=visible_projects(request.user),
+    )
+    if request.method == 'POST':
+        project_pk = material.project_id
+        material.delete()
+        messages.success(request, 'Material deleted.')
+        return redirect('projects:materials_detail', pk=project_pk)
+    return render(request, 'projects/material_confirm_delete.html', {'material': material})
 
 
 @login_required

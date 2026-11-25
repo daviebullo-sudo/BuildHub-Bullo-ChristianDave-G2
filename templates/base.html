@@ -17,10 +17,11 @@
         {% if user.role == 'homeowner' %}
           <a href="{% url 'projects:list' %}">My Projects</a>
           <a href="{% url 'projects:budget_list' %}">Budget</a>
-          <span class="nav-disabled" title="Coming in the next phase">Materials</span>
+          <a href="{% url 'projects:materials_list' %}">Materials</a>
         {% elif user.role == 'contractor' %}
           <a href="{% url 'projects:list' %}">Assigned Jobs</a>
           <a href="{% url 'projects:budget_list' %}">Costs</a>
+          <a href="{% url 'projects:materials_list' %}">Materials</a>
           <span class="nav-disabled" title="Coming in the next phase">Schedule</span>
           <span class="nav-disabled" title="Coming in the next phase">Workers</span>
         {% endif %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Materials | BuildHub{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Materials</h1>
+    <p class="muted">Track material quantities and purchase status by project.</p>
+  </div>
+</div>
+
+{% if projects %}
+  <div class="card table-wrap">
+    <table class="table">
+      <thead><tr><th>Project</th><th>Status</th><th>Homeowner</th><th>Materials</th><th></th></tr></thead>
+      <tbody>
+        {% for project in projects %}
+          <tr>
+            <td><strong>{{ project.title }}</strong></td>
+            <td><span class="badge status-{{ project.status }}">{{ project.get_status_display }}</span></td>
+            <td>{{ project.owner.display_name }}</td>
+            <td>{{ project.material_count }}</td>
+            <td><a class="btn" href="{% url 'projects:materials_detail' project.pk %}">Manage materials</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card"><p>No projects are available for materials tracking yet.</p></div>
+{% endif %}
+{% endblock %}

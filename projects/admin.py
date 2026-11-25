@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Expense, Project
+from .models import Expense, Material, Project
 
 
 @admin.register(Project)
@@ -15,3 +15,10 @@ class ExpenseAdmin(admin.ModelAdmin):
     list_display = ('description', 'project', 'category', 'amount', 'date', 'created_by')
     list_filter = ('category', 'date')
     search_fields = ('description', 'project__title')
+
+
+@admin.register(Material)
+class MaterialAdmin(admin.ModelAdmin):
+    list_display = ('name', 'project', 'quantity', 'unit', 'status', 'created_by')
+    list_filter = ('status',)
+    search_fields = ('name', 'project__title')

@@ -77,3 +77,5 @@ python manage.py test accounts
 | `/projects/<id>/delete/` | Owner only | Delete a project (confirmation page) |
 | `/projects/budget/` | Owner or assigned contractor | View total budgets and recorded expenses |
 | `/projects/<id>/budget/` | Owner or assigned contractor | Record and delete project expenses |
+| `/projects/materials/` | Owner or assigned contractor | View projects available for materials tracking |
+| `/projects/<id>/materials/` | Owner or assigned contractor | Add materials, update purchase status, and delete materials |

@@ -96,3 +96,36 @@ class Expense(models.Model):
 
     def __str__(self):
         return f'{self.description} - PHP {self.amount}'
+
+
+class Material(models.Model):
+    class Status(models.TextChoices):
+        PLANNED = 'planned', 'Planned'
+        ORDERED = 'ordered', 'Ordered'
+        PURCHASED = 'purchased', 'Purchased'
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='materials')
+    name = models.CharField(max_length=200)
+    quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+    )
+    unit = models.CharField(max_length=30, default='pcs')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PLANNED)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recorded_materials'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['status', 'name']
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(quantity__gte=Decimal('0.01')),
+                name='material_quantity_positive',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.name} ({self.quantity} {self.unit})'

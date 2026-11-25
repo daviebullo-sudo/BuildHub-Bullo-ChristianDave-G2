@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from accounts.models import User
 
-from .models import Expense, Project
+from .models import Expense, Material, Project
 
 PASSWORD = 'StrongPass#2026'
 
@@ -274,3 +274,77 @@ class BudgetTests(TestCase):
             self.client.post(reverse('projects:expense_delete', args=[expense.pk])).status_code,
             404,
         )
+
+
+class MaterialTests(TestCase):
+    def setUp(self):
+        self.owner = make_user('material-owner')
+        self.builder = make_user('material-builder', User.Role.CONTRACTOR)
+        self.stranger = make_user('material-stranger', User.Role.CONTRACTOR)
+        self.project = make_project(self.owner, 'Material Kitchen', contractor=self.builder)
+        self.other_project = make_project(self.stranger, 'Private Project')
+
+    def test_materials_list_contains_only_visible_projects(self):
+        self.client.login(username='material-builder', password=PASSWORD)
+        response = self.client.get(reverse('projects:materials_list'))
+        self.assertContains(response, 'Material Kitchen')
+        self.assertNotContains(response, 'Private Project')
+
+    def test_owner_and_assigned_contractor_can_add_and_update_material_status(self):
+        for username in ('material-owner', 'material-builder'):
+            with self.subTest(user=username):
+                self.client.login(username=username, password=PASSWORD)
+                detail_url = reverse('projects:materials_detail', args=[self.project.pk])
+                response = self.client.post(detail_url, {
+                    'name': 'Floor tiles',
+                    'quantity': '12.50',
+                    'unit': 'boxes',
+                    'status': Material.Status.PLANNED,
+                }, follow=True)
+                self.assertRedirects(response, detail_url)
+                self.assertContains(response, 'Material added successfully')
+
+        materials = Material.objects.filter(project=self.project)
+        self.assertEqual(materials.count(), 2)
+        material = materials.first()
+        self.client.login(username='material-builder', password=PASSWORD)
+        response = self.client.post(
+            reverse('projects:material_status', args=[material.pk]),
+            {'status': Material.Status.PURCHASED},
+            follow=True,
+        )
+        self.assertContains(response, 'Material status updated.')
+        material.refresh_from_db()
+        self.assertEqual(material.status, Material.Status.PURCHASED)
+
+    def test_invalid_material_and_unauthorized_access_are_rejected(self):
+        self.client.login(username='material-owner', password=PASSWORD)
+        detail_url = reverse('projects:materials_detail', args=[self.project.pk])
+        response = self.client.post(detail_url, {
+            'name': 'Sand',
+            'quantity': '0',
+            'unit': 'bags',
+            'status': Material.Status.PLANNED,
+        })
+        self.assertIn('quantity', response.context['form'].errors)
+        self.assertFalse(Material.objects.exists())
+
+        self.client.login(username='material-stranger', password=PASSWORD)
+        self.assertEqual(self.client.get(detail_url).status_code, 404)
+
+    def test_material_delete_requires_confirmation(self):
+        material = Material.objects.create(
+            project=self.project,
+            name='Cement',
+            quantity='5.00',
+            unit='bags',
+            created_by=self.owner,
+        )
+        self.client.login(username='material-owner', password=PASSWORD)
+        delete_url = reverse('projects:material_delete', args=[material.pk])
+        response = self.client.get(delete_url)
+        self.assertContains(response, 'Delete material?')
+        self.assertTrue(Material.objects.filter(pk=material.pk).exists())
+        response = self.client.post(delete_url, follow=True)
+        self.assertContains(response, 'Material deleted.')
+        self.assertFalse(Material.objects.filter(pk=material.pk).exists())

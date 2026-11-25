@@ -3,7 +3,7 @@ from django import forms
 from accounts.forms import StyledFormMixin
 from accounts.models import User
 
-from .models import Expense, Project
+from .models import Expense, Material, Project
 
 
 class ProjectForm(StyledFormMixin, forms.ModelForm):
@@ -62,6 +62,35 @@ class ExpenseForm(StyledFormMixin, forms.ModelForm):
             'amount': forms.NumberInput(attrs={'min': '0.01', 'step': '0.01'}),
             'date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style_fields()
+
+
+class MaterialForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = Material
+        fields = ('name', 'quantity', 'unit', 'status')
+        labels = {
+            'quantity': 'Quantity',
+            'unit': 'Unit (e.g. bags, pcs, m)',
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'e.g. Ceramic floor tiles'}),
+            'quantity': forms.NumberInput(attrs={'min': '0.01', 'step': '0.01'}),
+            'unit': forms.TextInput(attrs={'placeholder': 'pcs'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style_fields()
+
+
+class MaterialStatusForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = Material
+        fields = ('status',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
