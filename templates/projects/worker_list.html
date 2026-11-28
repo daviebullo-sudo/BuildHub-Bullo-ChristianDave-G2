@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Workers | BuildHub{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Workers</h1>
+  <a class="btn" href="{% url 'projects:worker_create' %}">Add worker</a>
+</div>
+{% if workers %}
+  <div class="card table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>Name</th><th>Role / Trade</th><th>Contact</th><th>Status</th><th>Tasks</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for worker in workers %}
+          <tr>
+            <td><strong>{{ worker.name }}</strong>{% if worker.specialization %}<br><span class="muted">{{ worker.specialization }}</span>{% endif %}</td>
+            <td>{{ worker.role|default:worker.trade|default:"Not specified" }}</td>
+            <td>{% if worker.contact_number %}{{ worker.contact_number }}{% else %}<span class="muted">Not provided</span>{% endif %}{% if worker.email %}<br>{{ worker.email }}{% endif %}</td>
+            <td>{% if worker.is_active %}<span class="badge status-completed">Active</span>{% else %}<span class="badge badge-soon">Inactive</span>{% endif %}</td>
+            <td>{{ worker.task_count }}</td>
+            <td>
+              <a href="{% url 'projects:worker_update' worker.pk %}">Edit</a>
+              <a class="text-danger" href="{% url 'projects:worker_delete' worker.pk %}">Remove</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card">
+    <p>No workers have been recorded yet.</p>
+    <a class="btn" href="{% url 'projects:worker_create' %}">Add your first worker</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -50,6 +50,7 @@
                   <td>
                     <strong>{{ task.title }}</strong>
                     {% if task.description %}<br><span class="muted">{{ task.description|linebreaksbr }}</span>{% endif %}
+                    {% if task.worker %}<br><span class="muted">Assigned to: {{ task.worker.name }}</span>{% endif %}
                   </td>
                   <td>{% if task.due_date %}{{ task.due_date|date:"M j, Y" }}{% else %}<span class="muted">No date</span>{% endif %}</td>
                   <td>

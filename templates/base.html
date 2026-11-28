@@ -25,7 +25,7 @@
           <a href="{% url 'projects:materials_list' %}">Materials</a>
           <a href="{% url 'projects:progress_list' %}">Progress</a>
           <span class="nav-disabled" title="Coming in the next phase">Schedule</span>
-          <span class="nav-disabled" title="Coming in the next phase">Workers</span>
+          <a href="{% url 'projects:worker_list' %}">Workers</a>
         {% endif %}
         <a href="{% url 'accounts:profile' %}">Profile</a>
         <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">

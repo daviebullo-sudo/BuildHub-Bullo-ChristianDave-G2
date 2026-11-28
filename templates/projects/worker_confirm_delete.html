@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Remove Worker | BuildHub{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Remove worker</h1>
+  <p>Remove <strong>{{ worker.name }}</strong>? Existing task assignments will be cleared.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Remove worker</button>
+    <a class="btn btn-secondary-solid" href="{% url 'projects:worker_list' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

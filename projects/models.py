@@ -159,6 +159,13 @@ class ProjectTask(models.Model):
     description = models.TextField(blank=True)
     due_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.TO_DO)
+    worker = models.ForeignKey(
+        'Worker',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_tasks',
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_project_tasks'
     )
@@ -170,3 +177,30 @@ class ProjectTask(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Worker(models.Model):
+    contractor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='workers',
+        limit_choices_to={'role': 'contractor'},
+    )
+    name = models.CharField(max_length=200)
+    role = models.CharField(max_length=100, blank=True)
+    specialization = models.CharField(max_length=100, blank=True)
+    trade = models.CharField(max_length=100, blank=True)
+    contact_number = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def display_name(self):
+        return self.name

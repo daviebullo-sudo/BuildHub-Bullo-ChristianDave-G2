@@ -3,7 +3,7 @@ from django import forms
 from accounts.forms import StyledFormMixin
 from accounts.models import User
 
-from .models import Expense, Material, Project, ProjectTask
+from .models import Expense, Material, Project, ProjectTask, Worker
 
 
 class ProjectForm(StyledFormMixin, forms.ModelForm):
@@ -100,10 +100,41 @@ class MaterialStatusForm(StyledFormMixin, forms.ModelForm):
 class ProjectTaskForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = ProjectTask
-        fields = ('title', 'description', 'due_date', 'status')
+        fields = ('title', 'description', 'due_date', 'status', 'worker')
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),
             'due_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop('project', None)
+        super().__init__(*args, **kwargs)
+        if project and project.contractor_id:
+            self.fields['worker'].queryset = Worker.objects.filter(
+                contractor=project.contractor,
+                is_active=True,
+            )
+        else:
+            self.fields['worker'].queryset = Worker.objects.none()
+        self._style_fields()
+
+
+class WorkerForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = Worker
+        fields = ('name', 'role', 'specialization', 'trade', 'contact_number', 'email', 'is_active')
+        labels = {
+            'role': 'Worker role',
+            'specialization': 'Specialization',
+            'trade': 'Trade',
+            'contact_number': 'Contact number',
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Worker full name'}),
+            'role': forms.TextInput(attrs={'placeholder': 'e.g. Foreman'}),
+            'specialization': forms.TextInput(attrs={'placeholder': 'e.g. Masonry'}),
+            'trade': forms.TextInput(attrs={'placeholder': 'e.g. Carpenter'}),
+            'contact_number': forms.TextInput(attrs={'placeholder': 'Contact number'}),
         }
 
     def __init__(self, *args, **kwargs):

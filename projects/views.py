@@ -17,8 +17,9 @@ from .forms import (
     ProjectForm,
     ProjectStatusForm,
     ProjectTaskForm,
+    WorkerForm,
 )
-from .models import Expense, Material, Project, ProjectTask
+from .models import Expense, Material, Project, ProjectTask, Worker
 
 
 def visible_projects(user):
@@ -91,7 +92,7 @@ def progress_list(request):
 def project_progress(request, pk):
     project = get_object_or_404(visible_projects(request.user), pk=pk)
     if request.method == 'POST':
-        form = ProjectTaskForm(request.POST)
+        form = ProjectTaskForm(request.POST, project=project)
         if form.is_valid():
             task = form.save(commit=False)
             task.project = project
@@ -101,7 +102,7 @@ def project_progress(request, pk):
             return redirect('projects:progress_detail', pk=project.pk)
         messages.error(request, 'Could not add the progress task.')
     else:
-        form = ProjectTaskForm()
+        form = ProjectTaskForm(project=project)
 
     return render(request, 'projects/project_progress.html', {
         'project': project,
@@ -276,6 +277,62 @@ def expense_delete(request, pk):
         messages.success(request, 'Expense deleted.')
         return redirect('projects:budget_detail', pk=project_pk)
     return render(request, 'projects/expense_confirm_delete.html', {'expense': expense})
+
+
+@role_required(User.Role.CONTRACTOR)
+def worker_list(request):
+    workers = Worker.objects.filter(contractor=request.user).annotate(
+        task_count=Count('assigned_tasks')
+    )
+    return render(request, 'projects/worker_list.html', {'workers': workers})
+
+
+@role_required(User.Role.CONTRACTOR)
+def worker_create(request):
+    if request.method == 'POST':
+        form = WorkerForm(request.POST)
+        if form.is_valid():
+            worker = form.save(commit=False)
+            worker.contractor = request.user
+            worker.save()
+            messages.success(request, 'Worker added successfully.')
+            return redirect('projects:worker_list')
+        messages.error(request, 'Could not add the worker. Please fix the errors below.')
+    else:
+        form = WorkerForm()
+    return render(request, 'projects/worker_form.html', {
+        'form': form,
+        'is_edit': False,
+    })
+
+
+@role_required(User.Role.CONTRACTOR)
+def worker_update(request, pk):
+    worker = get_object_or_404(Worker, pk=pk, contractor=request.user)
+    if request.method == 'POST':
+        form = WorkerForm(request.POST, instance=worker)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Worker updated successfully.')
+            return redirect('projects:worker_list')
+        messages.error(request, 'Could not update the worker. Please fix the errors below.')
+    else:
+        form = WorkerForm(instance=worker)
+    return render(request, 'projects/worker_form.html', {
+        'form': form,
+        'is_edit': True,
+        'worker': worker,
+    })
+
+
+@role_required(User.Role.CONTRACTOR)
+def worker_delete(request, pk):
+    worker = get_object_or_404(Worker, pk=pk, contractor=request.user)
+    if request.method == 'POST':
+        worker.delete()
+        messages.success(request, 'Worker removed successfully.')
+        return redirect('projects:worker_list')
+    return render(request, 'projects/worker_confirm_delete.html', {'worker': worker})
 
 
 @role_required(User.Role.HOMEOWNER)

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Expense, Material, Project, ProjectTask
+from .models import Expense, Material, Project, ProjectTask, Worker
 
 
 @admin.register(Project)
@@ -26,6 +26,13 @@ class MaterialAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectTask)
 class ProjectTaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'project', 'due_date', 'status', 'created_by')
+    list_display = ('title', 'project', 'worker', 'due_date', 'status', 'created_by')
     list_filter = ('status', 'due_date')
     search_fields = ('title', 'description', 'project__title')
+
+
+@admin.register(Worker)
+class WorkerAdmin(admin.ModelAdmin):
+    list_display = ('name', 'contractor', 'role', 'contact_number', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'role', 'contact_number', 'contractor__username')
