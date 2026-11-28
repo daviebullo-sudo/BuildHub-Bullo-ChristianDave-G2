@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Schedule | BuildHub{% endblock %}
+{% block content %}
+<div class="page-head schedule-head">
+  <div>
+    <h1>Schedule</h1>
+    <p class="muted">Assigned jobs, task dates, and upcoming milestones.</p>
+  </div>
+  <a class="btn" href="{% url 'projects:progress_list' %}">Manage tasks</a>
+</div>
+
+<div class="schedule-layout">
+  <section class="card schedule-calendar">
+    <div class="calendar-toolbar">
+      <a class="calendar-arrow" href="?month={{ prev_month }}" aria-label="Previous month">&larr;</a>
+      <h2>{{ month_name }}</h2>
+      <a class="calendar-arrow" href="?month={{ next_month }}" aria-label="Next month">&rarr;</a>
+    </div>
+    <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    </div>
+    <div class="calendar-grid calendar-days">
+      {% for week in calendar_weeks %}
+        {% for day in week %}
+          <div class="calendar-day{% if not day.in_month %} outside-month{% endif %}{% if day.is_today %} today{% endif %}">
+            <span class="day-number">{{ day.date|date:"j" }}</span>
+            {% for task in day.tasks %}
+              <a class="calendar-task task-{{ task.status }}" href="{% url 'projects:progress_detail' task.project.pk %}" title="{{ task.project.title }}: {{ task.title }}">
+                {{ task.title|truncatechars:18 }}
+              </a>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <aside class="schedule-sidebar">
+    <section class="card">
+      <h2>Upcoming</h2>
+      {% if upcoming_tasks %}
+        <div class="upcoming-list">
+          {% for task in upcoming_tasks %}
+            <a class="upcoming-item" href="{% url 'projects:progress_detail' task.project.pk %}">
+              <div class="upcoming-date">
+                <strong>{{ task.due_date|date:"d" }}</strong>
+                <span>{{ task.due_date|date:"M" }}</span>
+              </div>
+              <div>
+                <strong>{{ task.title }}</strong>
+                <span class="muted">{{ task.project.title }}</span>
+                {% if task.worker %}<span class="muted">{{ task.worker.name }}</span>{% endif %}
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No upcoming tasks.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Assigned jobs</h2>
+      {% if projects %}
+        <div class="assigned-list">
+          {% for project in projects %}
+            <a href="{% url 'projects:detail' project.pk %}">
+              <div>
+                <strong>{{ project.title }}</strong>
+                <span class="muted">{{ project.start_date|date:"M j" }} - {{ project.target_completion_date|date:"M j, Y" }}</span>
+              </div>
+              <span class="badge status-{{ project.status }}">{{ project.get_status_display }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No jobs assigned yet.</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

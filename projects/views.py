@@ -1,3 +1,5 @@
+import calendar
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib import messages
@@ -86,6 +88,83 @@ def progress_list(request):
         'owner', 'contractor'
     )
     return render(request, 'projects/progress_list.html', {'projects': projects})
+
+
+@role_required(User.Role.CONTRACTOR)
+def schedule(request):
+    """Display a contractor's assigned projects and dated tasks by month."""
+    month_value = request.GET.get('month', '')
+    try:
+        selected_month = date.fromisoformat(f'{month_value}-01')
+    except (TypeError, ValueError):
+        today = timezone.localdate()
+        selected_month = today.replace(day=1)
+
+    if selected_month.month == 12:
+        next_month = selected_month.replace(year=selected_month.year + 1, month=1)
+    else:
+        next_month = selected_month.replace(month=selected_month.month + 1)
+    if selected_month.month == 1:
+        prev_month = selected_month.replace(year=selected_month.year - 1, month=12)
+    else:
+        prev_month = selected_month.replace(month=selected_month.month - 1)
+
+    projects = (
+        Project.objects.filter(contractor=request.user)
+        .prefetch_related('tasks__worker')
+        .select_related('owner')
+    )
+    month_start = selected_month
+    month_end = selected_month.replace(
+        day=calendar.monthrange(selected_month.year, selected_month.month)[1]
+    )
+    tasks = (
+        ProjectTask.objects.filter(project__contractor=request.user, due_date__isnull=False)
+        .filter(due_date__gte=month_start, due_date__lte=month_end)
+        .select_related('project', 'worker')
+        .order_by('due_date', 'project__title', 'title')
+    )
+
+    tasks_by_date = {}
+    for task in tasks:
+        tasks_by_date.setdefault(task.due_date, []).append(task)
+
+    calendar_weeks = []
+    calendar_start = month_start - timedelta(days=month_start.weekday())
+    for week_number in range(6):
+        week = []
+        for day_number in range(7):
+            day = calendar_start + timedelta(days=(week_number * 7) + day_number)
+            week.append({
+                'date': day,
+                'in_month': day.month == selected_month.month,
+                'is_today': day == timezone.localdate(),
+                'tasks': tasks_by_date.get(day, []),
+            })
+        calendar_weeks.append(week)
+
+    today = timezone.localdate()
+    upcoming_tasks = (
+        ProjectTask.objects.filter(
+            project__contractor=request.user,
+            due_date__gte=today,
+        )
+        .exclude(status=ProjectTask.Status.DONE)
+        .select_related('project', 'worker')
+        .order_by('due_date', 'project__title', 'title')[:8]
+    )
+
+    return render(request, 'projects/schedule.html', {
+        'projects': projects,
+        'tasks': tasks,
+        'upcoming_tasks': upcoming_tasks,
+        'calendar_weeks': calendar_weeks,
+        'selected_month': selected_month,
+        'month_name': selected_month.strftime('%B %Y'),
+        'prev_month': prev_month.strftime('%Y-%m'),
+        'next_month': next_month.strftime('%Y-%m'),
+        'today': today,
+    })
 
 
 @login_required

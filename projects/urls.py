@@ -17,6 +17,7 @@ urlpatterns = [
     path('budget/', views.budget_list, name='budget_list'),
     path('materials/', views.materials_list, name='materials_list'),
     path('progress/', views.progress_list, name='progress_list'),
+    path('schedule/', views.schedule, name='schedule'),
     path('<int:pk>/progress/', views.project_progress, name='progress_detail'),
     path('<int:pk>/progress/status/', views.project_status_update, name='project_status'),
     path('tasks/<int:pk>/status/', views.task_status_update, name='task_status'),
