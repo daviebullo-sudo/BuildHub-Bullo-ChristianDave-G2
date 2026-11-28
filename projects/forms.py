@@ -3,7 +3,7 @@ from django import forms
 from accounts.forms import StyledFormMixin
 from accounts.models import User
 
-from .models import Expense, Material, Project
+from .models import Expense, Material, Project, ProjectTask
 
 
 class ProjectForm(StyledFormMixin, forms.ModelForm):
@@ -90,6 +90,30 @@ class MaterialForm(StyledFormMixin, forms.ModelForm):
 class MaterialStatusForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = Material
+        fields = ('status',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style_fields()
+
+
+class ProjectTaskForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = ProjectTask
+        fields = ('title', 'description', 'due_date', 'status')
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'due_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style_fields()
+
+
+class ProjectStatusForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = Project
         fields = ('status',)
 
     def __init__(self, *args, **kwargs):

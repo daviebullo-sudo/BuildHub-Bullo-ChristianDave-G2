@@ -10,8 +10,15 @@ from django.views.decorators.http import require_POST
 from accounts.decorators import role_required
 from accounts.models import User
 
-from .forms import ExpenseForm, MaterialForm, MaterialStatusForm, ProjectForm
-from .models import Expense, Material, Project
+from .forms import (
+    ExpenseForm,
+    MaterialForm,
+    MaterialStatusForm,
+    ProjectForm,
+    ProjectStatusForm,
+    ProjectTaskForm,
+)
+from .models import Expense, Material, Project, ProjectTask
 
 
 def visible_projects(user):
@@ -70,6 +77,84 @@ def project_detail(request, pk):
         'projects/project_detail.html',
         {'project': project, 'is_owner': project.owner_id == request.user.pk},
     )
+
+
+@login_required
+def progress_list(request):
+    projects = visible_projects(request.user).prefetch_related('tasks').select_related(
+        'owner', 'contractor'
+    )
+    return render(request, 'projects/progress_list.html', {'projects': projects})
+
+
+@login_required
+def project_progress(request, pk):
+    project = get_object_or_404(visible_projects(request.user), pk=pk)
+    if request.method == 'POST':
+        form = ProjectTaskForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.project = project
+            task.created_by = request.user
+            task.save()
+            messages.success(request, 'Progress task added successfully.')
+            return redirect('projects:progress_detail', pk=project.pk)
+        messages.error(request, 'Could not add the progress task.')
+    else:
+        form = ProjectTaskForm()
+
+    return render(request, 'projects/project_progress.html', {
+        'project': project,
+        'tasks': project.tasks.select_related('created_by'),
+        'form': form,
+        'status_form': ProjectStatusForm(instance=project),
+    })
+
+
+@login_required
+@require_POST
+def project_status_update(request, pk):
+    project = get_object_or_404(visible_projects(request.user), pk=pk)
+    form = ProjectStatusForm(request.POST, instance=project)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Project status updated.')
+    else:
+        messages.error(request, 'Could not update the project status.')
+    return redirect('projects:progress_detail', pk=project.pk)
+
+
+@login_required
+@require_POST
+def task_status_update(request, pk):
+    task = get_object_or_404(
+        ProjectTask.objects.select_related('project'),
+        pk=pk,
+        project__in=visible_projects(request.user),
+    )
+    status = request.POST.get('status')
+    if status in ProjectTask.Status.values:
+        task.status = status
+        task.save(update_fields=['status', 'updated_at'])
+        messages.success(request, 'Task status updated.')
+    else:
+        messages.error(request, 'Could not update the task status.')
+    return redirect('projects:progress_detail', pk=task.project_id)
+
+
+@login_required
+def task_delete(request, pk):
+    task = get_object_or_404(
+        ProjectTask.objects.select_related('project'),
+        pk=pk,
+        project__in=visible_projects(request.user),
+    )
+    if request.method == 'POST':
+        project_pk = task.project_id
+        task.delete()
+        messages.success(request, 'Progress task deleted.')
+        return redirect('projects:progress_detail', pk=project_pk)
+    return render(request, 'projects/task_confirm_delete.html', {'task': task})
 
 
 @login_required

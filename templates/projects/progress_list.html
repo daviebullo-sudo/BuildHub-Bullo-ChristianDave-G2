@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Progress | BuildHub{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Project Progress</h1>
+</div>
+{% if projects %}
+  <div class="progress-grid">
+    {% for project in projects %}
+      <article class="card progress-card">
+        <div class="page-head">
+          <div>
+            <h2><a href="{% url 'projects:progress_detail' project.pk %}">{{ project.title }}</a></h2>
+            <p class="muted">{{ project.location|default:"Location not provided" }}</p>
+          </div>
+          <span class="badge status-{{ project.status }}">{{ project.get_status_display }}</span>
+        </div>
+        <div class="progress-meta">
+          <strong>{{ project.progress }}%</strong>
+          <span>{{ project.tasks.count }} task{{ project.tasks.count|pluralize }}</span>
+        </div>
+        <div class="progress-track" aria-label="{{ project.progress }} percent complete">
+          <div class="progress-bar" style="width: {{ project.progress }}%"></div>
+        </div>
+        <a class="btn" href="{% url 'projects:progress_detail' project.pk %}">Manage progress</a>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card">
+    <p>No projects are available for progress tracking.</p>
+  </div>
+{% endif %}
+{% endblock %}

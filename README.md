@@ -79,3 +79,5 @@ python manage.py test accounts
 | `/projects/<id>/budget/` | Owner or assigned contractor | Record and delete project expenses |
 | `/projects/materials/` | Owner or assigned contractor | View projects available for materials tracking |
 | `/projects/<id>/materials/` | Owner or assigned contractor | Add materials, update purchase status, and delete materials |
+| `/projects/progress/` | Owner or assigned contractor | View project completion percentages |
+| `/projects/<id>/progress/` | Owner or assigned contractor | Update project status and manage tasks/milestones |

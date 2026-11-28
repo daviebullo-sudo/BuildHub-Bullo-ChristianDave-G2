@@ -63,6 +63,23 @@ class Project(models.Model):
         spent = getattr(self, 'spent', None) or Decimal('0')
         return self.estimated_budget - spent
 
+    @property
+    def progress(self):
+        tasks = getattr(self, 'tasks', None)
+        if tasks is not None:
+            task_list = list(tasks.all())
+            if task_list:
+                completed = sum(task.status == ProjectTask.Status.DONE for task in task_list)
+                in_progress = sum(task.status == ProjectTask.Status.IN_PROGRESS for task in task_list)
+                return round((completed + (in_progress * 0.5)) * 100 / len(task_list))
+        if self.status == self.Status.COMPLETED:
+            return 100
+        if self.status == self.Status.IN_PROGRESS:
+            return 50
+        if self.status == self.Status.ON_HOLD:
+            return 25
+        return 0
+
 
 class Expense(models.Model):
     class Category(models.TextChoices):
@@ -129,3 +146,27 @@ class Material(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.quantity} {self.unit})'
+
+
+class ProjectTask(models.Model):
+    class Status(models.TextChoices):
+        TO_DO = 'to_do', 'To Do'
+        IN_PROGRESS = 'in_progress', 'In Progress'
+        DONE = 'done', 'Done'
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.TO_DO)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_project_tasks'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['status', 'due_date', '-created_at']
+
+    def __str__(self):
+        return self.title

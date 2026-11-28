@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Expense, Material, Project
+from .models import Expense, Material, Project, ProjectTask
 
 
 @admin.register(Project)
@@ -22,3 +22,10 @@ class MaterialAdmin(admin.ModelAdmin):
     list_display = ('name', 'project', 'quantity', 'unit', 'status', 'created_by')
     list_filter = ('status',)
     search_fields = ('name', 'project__title')
+
+
+@admin.register(ProjectTask)
+class ProjectTaskAdmin(admin.ModelAdmin):
+    list_display = ('title', 'project', 'due_date', 'status', 'created_by')
+    list_filter = ('status', 'due_date')
+    search_fields = ('title', 'description', 'project__title')

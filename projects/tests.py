@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from accounts.models import User
 
-from .models import Expense, Material, Project
+from .models import Expense, Material, Project, ProjectTask
 
 PASSWORD = 'StrongPass#2026'
 
@@ -274,6 +274,75 @@ class BudgetTests(TestCase):
             self.client.post(reverse('projects:expense_delete', args=[expense.pk])).status_code,
             404,
         )
+
+
+class ProgressTests(TestCase):
+    def setUp(self):
+        self.owner = make_user('progress-owner')
+        self.builder = make_user('progress-builder', User.Role.CONTRACTOR)
+        self.stranger = make_user('progress-stranger', User.Role.CONTRACTOR)
+        self.project = make_project(
+            self.owner,
+            'Progress Kitchen',
+            contractor=self.builder,
+            status=Project.Status.IN_PROGRESS,
+        )
+
+    def test_owner_and_contractor_can_track_project_progress(self):
+        for username in ('progress-owner', 'progress-builder'):
+            with self.subTest(user=username):
+                self.client.login(username=username, password=PASSWORD)
+                url = reverse('projects:progress_detail', args=[self.project.pk])
+                response = self.client.post(url, {
+                    'title': f'{username} task',
+                    'description': 'Complete this milestone.',
+                    'due_date': '2026-12-15',
+                    'status': ProjectTask.Status.TO_DO,
+                }, follow=True)
+                self.assertRedirects(response, url)
+                self.assertContains(response, 'Progress task added successfully')
+
+        self.assertEqual(ProjectTask.objects.filter(project=self.project).count(), 2)
+
+    def test_task_status_affects_percentage(self):
+        task = ProjectTask.objects.create(
+            project=self.project,
+            title='Install cabinets',
+            status=ProjectTask.Status.DONE,
+            created_by=self.owner,
+        )
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.progress, 100)
+
+        task.status = ProjectTask.Status.IN_PROGRESS
+        task.save(update_fields=['status'])
+        self.assertEqual(self.project.progress, 50)
+
+    def test_status_update_and_task_delete(self):
+        task = ProjectTask.objects.create(
+            project=self.project,
+            title='Paint walls',
+            status=ProjectTask.Status.TO_DO,
+            created_by=self.owner,
+        )
+        self.client.login(username='progress-builder', password=PASSWORD)
+        status_url = reverse('projects:project_status', args=[self.project.pk])
+        self.assertEqual(
+            self.client.post(status_url, {'status': Project.Status.COMPLETED}, follow=True).status_code,
+            200,
+        )
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.status, Project.Status.COMPLETED)
+
+        delete_url = reverse('projects:task_delete', args=[task.pk])
+        response = self.client.post(delete_url, follow=True)
+        self.assertContains(response, 'Progress task deleted.')
+        self.assertFalse(ProjectTask.objects.filter(pk=task.pk).exists())
+
+    def test_unrelated_user_cannot_view_progress(self):
+        self.client.login(username='progress-stranger', password=PASSWORD)
+        url = reverse('projects:progress_detail', args=[self.project.pk])
+        self.assertEqual(self.client.get(url).status_code, 404)
 
 
 class MaterialTests(TestCase):

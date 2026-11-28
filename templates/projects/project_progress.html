@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.title }} Progress | BuildHub{% endblock %}
+{% block content %}
+<div class="card wide">
+  <div class="page-head">
+    <h1>{{ project.title }} Progress</h1>
+    <span class="badge status-{{ project.status }}">{{ project.get_status_display }}</span>
+  </div>
+
+  <div class="progress-meta">
+    <strong>{{ project.progress }}% complete</strong>
+    <span>{{ tasks.count }} task{{ tasks.count|pluralize }}</span>
+  </div>
+  <div class="progress-track large" aria-label="{{ project.progress }} percent complete">
+    <div class="progress-bar" style="width: {{ project.progress }}%"></div>
+  </div>
+
+  <form method="post" action="{% url 'projects:project_status' project.pk %}" class="status-form">
+    {% csrf_token %}
+    {% for field in status_form %}
+      {% include 'accounts/_field.html' with field=field %}
+    {% endfor %}
+    <button type="submit" class="btn">Update project status</button>
+  </form>
+
+  <div class="budget-layout progress-layout">
+    <aside class="card">
+      <h2>Add a task</h2>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for error in form.non_field_errors %}<div class="alert alert-error">{{ error }}</div>{% endfor %}
+        {% for field in form %}
+          {% include 'accounts/_field.html' with field=field %}
+        {% endfor %}
+        <button type="submit" class="btn">Add task</button>
+      </form>
+    </aside>
+
+    <section>
+      <h2>Tasks and milestones</h2>
+      {% if tasks %}
+        <div class="card table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Task</th><th>Due date</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for task in tasks %}
+                <tr>
+                  <td>
+                    <strong>{{ task.title }}</strong>
+                    {% if task.description %}<br><span class="muted">{{ task.description|linebreaksbr }}</span>{% endif %}
+                  </td>
+                  <td>{% if task.due_date %}{{ task.due_date|date:"M j, Y" }}{% else %}<span class="muted">No date</span>{% endif %}</td>
+                  <td>
+                    <form method="post" action="{% url 'projects:task_status' task.pk %}" class="inline-status-form">
+                      {% csrf_token %}
+                      <select name="status" class="form-control" aria-label="Status for {{ task.title }}" onchange="this.form.submit()">
+                        {% for value, label in task.Status.choices %}
+                          <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </form>
+                  </td>
+                  <td><a class="text-danger" href="{% url 'projects:task_delete' task.pk %}">Delete</a></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="card"><p>No tasks yet. Add a milestone to start tracking progress.</p></div>
+      {% endif %}
+    </section>
+  </div>
+  <a class="btn btn-secondary-solid" href="{% url 'projects:progress_list' %}">Back to progress</a>
+</div>
+{% endblock %}

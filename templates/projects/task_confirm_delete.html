@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Delete task | BuildHub{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Delete progress task?</h1>
+  <p>Delete <strong>{{ task.title }}</strong>? This cannot be undone.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Delete task</button>
+    <a class="btn btn-secondary" href="{% url 'projects:progress_detail' task.project_id %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}
